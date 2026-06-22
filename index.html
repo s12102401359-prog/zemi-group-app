@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>ゼミ グループ分けアプリ</title>
+
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --main: #2563eb;
+      --main-dark: #1d4ed8;
+      --danger: #ef4444;
+      --danger-bg: #fee2e2;
+      --present-bg: #f9fafb;
+      --seat: #eef2ff;
+      --seat-border: #c7d2fe;
+      --shadow: 0 12px 30px rgba(15, 23, 42, 0.10);
+      --radius: 22px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "YuGothic", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .app {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 24px;
+    }
+
+    header {
+      grid-column: 1 / -1;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: white;
+      border-radius: var(--radius);
+      padding: 24px 30px;
+      box-shadow: var(--shadow);
+    }
+
+    header h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+      letter-spacing: 0.04em;
+    }
+
+    header p {
+      margin: 0;
+      opacity: 0.92;
+      font-size: 16px;
+    }
+
+    .panel,
+    .result,
+    .history-panel {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+    }
+
+    .panel h2,
+    .result h2,
+    .history-panel h2 {
+      margin: 0 0 16px;
+      font-size: 22px;
+    }
+
+    .date-card {
+      background: #eef2ff;
+      color: #3730a3;
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 16px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .date-label {
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .date-value {
+      font-size: 22px;
+    }
+
+    .count-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .count-card {
+      border-radius: 18px;
+      padding: 16px;
+      text-align: center;
+      background: #f3f4f6;
+    }
+
+    .count-card.present {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .count-card.absent {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .count-label {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .count-number {
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .member-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .member-button {
+      min-height: 58px;
+      border: 2px solid #e5e7eb;
+      border-radius: 18px;
+      background: var(--present-bg);
+      color: var(--text);
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 12px;
+    }
+
+    .member-button::after {
+      content: "出席";
+      position: absolute;
+      right: 10px;
+      bottom: 7px;
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .member-button.absent {
+      background: var(--danger-bg);
+      border-color: var(--danger);
+      color: #991b1b;
+    }
+
+    .member-button.absent::after {
+      content: "欠席";
+      color: var(--danger);
+    }
+
+    .member-button:active,
+    .action-button:active {
+      transform: scale(0.97);
+    }
+
+    .controls {
+      display: grid;
+      gap: 12px;
+    }
+
+    .two-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .action-button {
+      border: none;
+      border-radius: 18px;
+      padding: 18px;
+      font-size: 18px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    .primary {
+      background: var(--main);
+      color: white;
+    }
+
+    .primary:active {
+      background: var(--main-dark);
+    }
+
+    .success {
+      background: #16a34a;
+      color: white;
+    }
+
+    .warning-button {
+      background: #f59e0b;
+      color: white;
+    }
+
+    .secondary {
+      background: #e5e7eb;
+      color: var(--text);
+    }
+
+    .danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .status {
+      margin-top: 18px;
+      padding: 14px;
+      background: #f3f4f6;
+      border-radius: 16px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .warning-text {
+      color: var(--danger);
+      font-weight: 800;
+    }
+
+    .result {
+      min-height: 720px;
+    }
+
+    .room {
+      background: #f8fafc;
+      border: 2px solid #e5e7eb;
+      border-radius: 24px;
+      padding: 24px;
+    }
+
+    .whiteboard {
+      width: 70%;
+      margin: 0 auto 24px;
+      padding: 14px;
+      text-align: center;
+      background: #ffffff;
+      color: #111827;
+      border: 4px solid #111827;
+      border-radius: 14px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      box-shadow: inset 0 0 0 3px #e5e7eb;
+    }
+
+    .desk-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+    }
+
+    .group-block {
+      border: 3px solid #d1d5db;
+      border-radius: 24px;
+      background: #ffffff;
+      padding: 16px;
+      min-height: 220px;
+    }
+
+    .group-block.group-1 {
+      border-color: #2563eb;
+      background: #eff6ff;
+    }
+
+    .group-block.group-2 {
+      border-color: #16a34a;
+      background: #f0fdf4;
+    }
+
+    .group-block.group-3 {
+      border-color: #7c3aed;
+      background: #f5f3ff;
+    }
+
+    .group-block.group-4 {
+      border-color: #ea580c;
+      background: #fff7ed;
+    }
+
+    .group-block.extra {
+      border-color: #0891b2;
+      background: #ecfeff;
+    }
+
+    .group-title {
+      font-size: 20px;
+      font-weight: 900;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    .seats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .seat {
+      min-height: 74px;
+      background: var(--seat);
+      border: 2px solid var(--seat-border);
+      border-radius: 16px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .seat-number {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .seat-name {
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .empty-seat {
+      opacity: 0.4;
+      background: #f3f4f6;
+      border-color: #d1d5db;
+    }
+
+    .extra-area {
+      margin-top: 22px;
+    }
+
+    .history-panel {
+      grid-column: 1 / -1;
+    }
+
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .history-item {
+      border: 2px solid #e5e7eb;
+      border-radius: 18px;
+      padding: 16px;
+      background: #f9fafb;
+    }
+
+    .history-date {
+      font-size: 18px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .history-meta {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .history-groups {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .history-group {
+      background: white;
+      border-radius: 14px;
+      border: 1px solid #e5e7eb;
+      padding: 10px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .history-group strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .empty-history {
+      color: var(--muted);
+      background: #f3f4f6;
+      padding: 18px;
+      border-radius: 16px;
+    }
+
+    @media (max-width: 1000px) {
+      body {
+        padding: 16px;
+      }
+
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .history-groups {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (orientation: portrait) {
+      .app {
+        max-width: 900px;
+      }
+
+      header h1 {
+        font-size: 28px;
+      }
+
+      .desk-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .history-groups {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header>
+      <h1>ゼミ グループ分けアプリ</h1>
+      <p>欠席者を選び、前回・前々回の組み合わせをなるべく避けて座席を自動決定します。</p>
+    </header>
+
+    <section class="panel">
+      <h2>欠席者を選択</h2>
+
+      <div class="date-card">
+        <div class="date-label">今回のゼミ日</div>
+        <div id="seminarDate" class="date-value"></div>
+      </div>
+
+      <div class="count-box">
+        <div class="count-card present">
+          <div class="count-label">出席者</div>
+          <div id="presentCount" class="count-number">15</div>
+        </div>
+
+        <div class="count-card absent">
+          <div class="count-label">欠席者</div>
+          <div id="absentCount" class="count-number">0</div>
+        </div>
+      </div>
+
+      <div id="memberList" class="member-list"></div>
+
+      <div class="controls">
+        <button class="action-button primary" onclick="makeGroups()">抽選する</button>
+
+        <div class="two-buttons">
+          <button class="action-button warning-button" onclick="rerollGroups()">再抽選</button>
+          <button class="action-button success" onclick="confirmGroups()">確定</button>
+        </div>
+
+        <button class="action-button secondary" onclick="resetAbsentees()">欠席者をリセット</button>
+      </div>
+
+      <div id="status" class="status">
+        欠席者の名前を押してから「抽選する」を押してください。
+      </div>
+    </section>
+
+    <section class="result">
+      <h2>座席表</h2>
+
+      <div class="room">
+        <div class="whiteboard">ホワイトボード</div>
+        <div id="deskLayout" class="desk-layout"></div>
+        <div id="extraArea" class="extra-area"></div>
+      </div>
+    </section>
+
+    <section class="history-panel">
+      <div class="history-header">
+        <h2>履歴</h2>
+        <button class="action-button danger" onclick="deleteHistory()">履歴を削除</button>
+      </div>
+
+      <div id="historyList" class="history-list"></div>
+    </section>
+  </div>
+
+  <script>
+    const members = [
+      "會田", "青沼", "秋山", "明戸", "五十嵐",
+      "稲葉", "井上", "岡崎", "金子", "鈴木",
+      "仲森", "平本", "星野", "松井", "山本"
+    ];
+
+    const STORAGE_KEY = "seminar_group_history_v2";
+
+    const memberList = document.getElementById("memberList");
+    const deskLayout = document.getElementById("deskLayout");
+    const extraArea = document.getElementById("extraArea");
+    const statusEl = document.getElementById("status");
+    const presentCountEl = document.getElementById("presentCount");
+    const absentCountEl = document.getElementById("absentCount");
+    const seminarDateEl = document.getElementById("seminarDate");
+    const historyList = document.getElementById("historyList");
+
+    let absentNames = [];
+    let currentGroups = null;
+    let currentScore = null;
+
+    function init() {
+      memberList.innerHTML = "";
+
+      members.forEach(name => {
+        const button = document.createElement("button");
+        button.className = "member-button";
+        button.textContent = name;
+        button.dataset.name = name;
+
+        button.addEventListener("click", () => {
+          toggleAbsent(name, button);
+        });
+
+        memberList.appendChild(button);
+      });
+
+      seminarDateEl.textContent = getNextMondayText();
+
+      updateCounts();
+      drawEmptySeatMap();
+      drawHistory();
+    }
+
+    function getNextMondayText() {
+      const today = new Date();
+      const day = today.getDay();
+      const daysUntilMonday = day === 1 ? 0 : (8 - day) % 7;
+
+      const seminarDate = new Date(today);
+      seminarDate.setDate(today.getDate() + daysUntilMonday);
+
+      const year = seminarDate.getFullYear();
+      const month = seminarDate.getMonth() + 1;
+      const date = seminarDate.getDate();
+
+      return `${year}年${month}月${date}日（月）`;
+    }
+
+    function toggleAbsent(name, button) {
+      if (absentNames.includes(name)) {
+        absentNames = absentNames.filter(absent => absent !== name);
+        button.classList.remove("absent");
+      } else {
+        absentNames.push(name);
+        button.classList.add("absent");
+      }
+
+      currentGroups = null;
+      currentScore = null;
+      updateCounts();
+    }
+
+    function updateCounts() {
+      const presentCount = members.length - absentNames.length;
+      const absentCount = absentNames.length;
+
+      presentCountEl.textContent = presentCount;
+      absentCountEl.textContent = absentCount;
+    }
+
+    function resetAbsentees() {
+      absentNames = [];
+      currentGroups = null;
+      currentScore = null;
+
+      document.querySelectorAll(".member-button").forEach(button => {
+        button.classList.remove("absent");
+      });
+
+      updateCounts();
+      drawEmptySeatMap();
+
+      statusEl.innerHTML = "欠席者をリセットしました。";
+    }
+
+    function shuffle(array) {
+      const copied = [...array];
+
+      for (let i = copied.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copied[i], copied[j]] = [copied[j], copied[i]];
+      }
+
+      return copied;
+    }
+
+    function decideGroupSizes(count) {
+      /*
+        基本方針:
+        - 1グループは必ず3人以上
+        - 5人グループは、出席者が5人だけのときだけ許可
+        - それ以外はできるだけ3〜4人グループにする
+        - 出席者が1人または2人の場合のみグループ分け不可
+      */
+
+      if (count < 3) {
+        return null;
+      }
+
+      if (count === 3) return [3];
+      if (count === 4) return [4];
+      if (count === 5) return [5];
+      if (count === 6) return [3, 3];
+      if (count === 7) return [4, 3];
+      if (count === 8) return [4, 4];
+      if (count === 9) return [3, 3, 3];
+      if (count === 10) return [4, 3, 3];
+      if (count === 11) return [4, 4, 3];
+      if (count === 12) return [4, 4, 4];
+      if (count === 13) return [4, 3, 3, 3];
+      if (count === 14) return [4, 4, 3, 3];
+      if (count === 15) return [4, 4, 4, 3];
+
+      const sizes = [];
+      let remaining = count;
+
+      while (remaining > 0) {
+        if (remaining === 3) {
+          sizes.push(3);
+          remaining = 0;
+        } else if (remaining === 4) {
+          sizes.push(4);
+          remaining = 0;
+        } else if (remaining === 5) {
+          if (sizes.length > 0 && sizes[sizes.length - 1] === 4) {
+            sizes[sizes.length - 1] = 3;
+            sizes.push(3, 3);
+          } else {
+            sizes.push(5);
+          }
+          remaining = 0;
+        } else if (remaining === 6) {
+          sizes.push(3, 3);
+          remaining = 0;
+        } else if (remaining === 7) {
+          sizes.push(4, 3);
+          remaining = 0;
+        } else if (remaining === 8) {
+          sizes.push(4, 4);
+          remaining = 0;
+        } else {
+          sizes.push(4);
+          remaining -= 4;
+        }
+      }
+
+      return sizes;
+    }
+
+    function makeGroups() {
+      const result = createBestGroups();
+
+      if (!result) {
+        currentGroups = null;
+        currentScore = null;
+
+        statusEl.innerHTML = `
+          <span class="warning-text">現在の出席者数は ${members.length - absentNames.length} 人です。</span><br>
+          3人以上いないため、グループ分けできません。
+        `;
+
+        drawEmptySeatMap();
+        return;
+      }
+
+      currentGroups = result.groups;
+      currentScore = result.score;
+
+      drawSeatMap(currentGroups);
+      updateStatus("抽選しました。内容を保存する場合は「確定」を押してください。");
+    }
+
+    function rerollGroups() {
+      makeGroups();
+    }
+
+    function createBestGroups() {
+      const presentMembers = members.filter(name => !absentNames.includes(name));
+      const groupSizes = decideGroupSizes(presentMembers.length);
+
+      if (!groupSizes) {
+        return null;
+      }
+
+      const history = loadHistory();
+      const recentHistory = history.slice(0, 2);
+      const recentPairs = createRecentPairSet(recentHistory);
+
+      let bestGroups = null;
+      let bestScore = Infinity;
+
+      for (let attempt = 0; attempt < 150; attempt++) {
+        const shuffledMembers = shuffle(presentMembers);
+        const groups = [];
+        let index = 0;
+
+        groupSizes.forEach(size => {
+          const group = shuffledMembers.slice(index, index + size);
+          groups.push(group);
+          index += size;
+        });
+
+        const score = scoreGroups(groups, recentPairs);
+
+        if (score < bestScore) {
+          bestScore = score;
+          bestGroups = groups;
+        }
+
+        if (bestScore === 0) {
+          break;
+        }
+      }
+
+      return {
+        groups: bestGroups,
+        score: bestScore
+      };
+    }
+
+    function createRecentPairSet(recentHistory) {
+      const pairSet = new Set();
+
+      recentHistory.forEach(record => {
+        record.groups.forEach(group => {
+          for (let i = 0; i < group.length; i++) {
+            for (let j = i + 1; j < group.length; j++) {
+              pairSet.add(createPairKey(group[i], group[j]));
+            }
+          }
+        });
+      });
+
+      return pairSet;
+    }
+
+    function scoreGroups(groups, recentPairs) {
+      let score = 0;
+
+      groups.forEach(group => {
+        for (let i = 0; i < group.length; i++) {
+          for (let j = i + 1; j < group.length; j++) {
+            if (recentPairs.has(createPairKey(group[i], group[j]))) {
+              score++;
+            }
+          }
+        }
+      });
+
+      return score;
+    }
+
+    function createPairKey(a, b) {
+      return [a, b].sort().join("-");
+    }
+
+    function updateStatus(message) {
+      const presentMembers = members.filter(name => !absentNames.includes(name));
+
+      let avoidText = "";
+
+      if (currentScore === 0) {
+        avoidText = "前回・前々回と同じペアはありません。";
+      } else if (currentScore !== null) {
+        avoidText = `前回・前々回と同じペアが ${currentScore} 組あります。`;
+      }
+
+      statusEl.innerHTML = `
+        ${message}<br>
+        出席者: ${presentMembers.length}人<br>
+        欠席者: ${absentNames.length ? absentNames.join("、") : "なし"}<br>
+        グループ数: ${currentGroups ? currentGroups.length : 0}組<br>
+        ${avoidText}
+      `;
+    }
+
+    function confirmGroups() {
+      if (!currentGroups) {
+        statusEl.innerHTML = `
+          <span class="warning-text">まだ抽選結果がありません。</span><br>
+          先に「抽選する」を押してください。
+        `;
+        return;
+      }
+
+      const presentMembers = members.filter(name => !absentNames.includes(name));
+
+      const record = {
+        id: Date.now(),
+        date: getNextMondayText(),
+        savedAt: new Date().toLocaleString("ja-JP"),
+        presentCount: presentMembers.length,
+        absentCount: absentNames.length,
+        absentNames: [...absentNames],
+        groups: currentGroups
+      };
+
+      const history = loadHistory();
+      history.unshift(record);
+      saveHistory(history);
+
+      drawHistory();
+      updateStatus("確定しました。履歴に保存しました。");
+    }
+
+    function loadHistory() {
+      const json = localStorage.getItem(STORAGE_KEY);
+
+      if (!json) {
+        return [];
+      }
+
+      try {
+        return JSON.parse(json);
+      } catch {
+        return [];
+      }
+    }
+
+    function saveHistory(history) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    }
+
+    function deleteHistory() {
+      const ok = confirm("履歴をすべて削除しますか？");
+
+      if (!ok) {
+        return;
+      }
+
+      localStorage.removeItem(STORAGE_KEY);
+      drawHistory();
+
+      statusEl.innerHTML = "履歴を削除しました。";
+    }
+
+    function drawSeatMap(groups) {
+      deskLayout.innerHTML = "";
+      extraArea.innerHTML = "";
+
+      /*
+        座席配置:
+        左上から時計回りに
+        グループ1 → グループ2 → グループ3 → グループ4
+      */
+      const displayOrder = [0, 1, 3, 2];
+
+      displayOrder.forEach(groupIndex => {
+        const group = groups[groupIndex] || [];
+        const groupNumber = groupIndex + 1;
+
+        const block = createGroupBlock(groupNumber, group, false);
+        deskLayout.appendChild(block);
+      });
+
+      if (groups.length > 4) {
+        groups.slice(4).forEach((group, index) => {
+          const block = createGroupBlock(index + 5, group, true);
+          extraArea.appendChild(block);
+        });
+      }
+    }
+
+    function createGroupBlock(groupNumber, group, isExtra) {
+      const block = document.createElement("div");
+
+      if (isExtra) {
+        block.className = "group-block extra";
+      } else {
+        block.className = `group-block group-${groupNumber}`;
+      }
+
+      const seatCount = Math.max(group.length, 4);
+      const seats = [];
+
+      for (let i = 0; i < seatCount; i++) {
+        const name = group[i];
+
+        if (name) {
+          seats.push(`
+            <div class="seat">
+              <div class="seat-number">席 ${i + 1}</div>
+              <div class="seat-name">${name}</div>
+            </div>
+          `);
+        } else {
+          seats.push(`
+            <div class="seat empty-seat">
+              <div class="seat-number">席 ${i + 1}</div>
+              <div class="seat-name">空席</div>
+            </div>
+          `);
+        }
+      }
+
+      block.innerHTML = `
+        <div class="group-title">グループ ${groupNumber}</div>
+        <div class="seats">
+          ${seats.join("")}
+        </div>
+      `;
+
+      return block;
+    }
+
+    function drawEmptySeatMap() {
+      deskLayout.innerHTML = "";
+      extraArea.innerHTML = "";
+
+      const emptyGroups = [[], [], [], []];
+      const displayOrder = [0, 1, 3, 2];
+
+      displayOrder.forEach(groupIndex => {
+        const block = createGroupBlock(groupIndex + 1, emptyGroups[groupIndex], false);
+        deskLayout.appendChild(block);
+      });
+    }
+
+    function drawHistory() {
+      const history = loadHistory();
+
+      historyList.innerHTML = "";
+
+      if (history.length === 0) {
+        historyList.innerHTML = `
+          <div class="empty-history">
+            まだ履歴はありません。抽選後に「確定」を押すと、ここに保存されます。
+          </div>
+        `;
+        return;
+      }
+
+      history.forEach(record => {
+        const item = document.createElement("div");
+        item.className = "history-item";
+
+        const groupHtml = record.groups.map((group, index) => {
+          return `
+            <div class="history-group">
+              <strong>グループ ${index + 1}</strong>
+              ${group.join("、")}
+            </div>
+          `;
+        }).join("");
+
+        item.innerHTML = `
+          <div class="history-date">${record.date}</div>
+          <div class="history-meta">
+            出席 ${record.presentCount}人 ／ 欠席 ${record.absentCount}人
+            ${record.absentNames.length ? `／ 欠席者: ${record.absentNames.join("、")}` : "／ 欠席者: なし"}
+          </div>
+          <div class="history-groups">
+            ${groupHtml}
+          </div>
+        `;
+
+        historyList.appendChild(item);
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html> 
